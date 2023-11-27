@@ -7,6 +7,7 @@ const cors = require('cors');
 
 const { pool } = require('./config/db.js');
 
+
 //route imports
 const stockItemsRoute = require('./routes/stockItemsRoutes.js');
 const stockSalesRoute = require('./routes/stockSalesRoutes.js');

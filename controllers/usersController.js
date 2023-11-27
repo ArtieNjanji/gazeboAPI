@@ -1,5 +1,18 @@
 const bcrypt = require('bcrypt');
+const jwt = require('jsonwebtoken');
 const { pool } = require('../config/db');
+
+const generateToken = (mine_no) => {
+  return jwt.sign(
+    {
+      mine_no,
+    },
+    process.env.JWT_SECRET,
+    {
+      expiresIn: '30d',
+    }
+  );
+};
 
 // Get all users
 const getAllUsers = async (req, res) => {
@@ -158,7 +171,12 @@ const signin = async (req, res) => {
 
     if (passwordMatch) {
       // Passwords match - login successful
-      res.status(200).json({ message: 'Login successful' });
+      res
+        .status(200)
+        .json({
+          message: 'Login successful',
+          token: generateToken(user.mine_no),
+        });
     } else {
       // Passwords don't match
       res.status(401).json({ error: 'Invalid password' });

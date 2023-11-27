@@ -21,8 +21,8 @@ const getTransaction = async (req, res) => {
   const itemID = req.params.id;
 
   try {
-    const query = `SELECT TOP 100 * FROM transactions WHERE transactionID = ${itemID}`;
-    const result = await pool.request().query(query);
+    const query = `SELECT TOP 100 * FROM transactions WHERE transactionID = @itemID`;
+    const result = await pool.request().input('itemID', itemID).query(query);
 
     if (result.recordset.length === 0) {
       res.status(404).json({ error: 'Item not found' });
@@ -36,10 +36,11 @@ const getTransaction = async (req, res) => {
 
 // Add a transaction
 const addTransaction = async (req, res) => {
-  let { itemBought, date, clientID, qty, totalCost, dateString } = req.body;
+  let { itemBought, qty, totalCost } = req.body;
 
   date = new Date();
   dateString = date.toISOString().slice(0, 10).replace('T', '');
+  clientID = req.user.mine_no;
 
   try {
     if (!itemBought || !qty || !totalCost) {
@@ -48,9 +49,16 @@ const addTransaction = async (req, res) => {
     }
 
     const query = `INSERT INTO transactions (itemBought, date, clientID, qty,  totalCost, dateString ) 
-                    VALUES ('${itemBought}',GETDATE(), ${clientID}, ${qty}, ${totalCost}, '${dateString}')`;
+                    VALUES (@itemBought,GETDATE(), @clientID, @qty, @totalCost, @dateString)`;
 
-    const result = await pool.request().query(query);
+    await pool
+      .request()
+      .input('itemBought', itemBought)
+      .input('clientID', clientID)
+      .input('qty', qty)
+      .input('totalCost', totalCost)
+      .input('dateString', dateString)
+      .query(query);
 
     res.status(201).json({ message: 'Item added successfully' });
   } catch (err) {
